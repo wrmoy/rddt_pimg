@@ -1,6 +1,7 @@
 import httplib
 import json
 import logging
+import re
 import string
 from sys import exit
 
@@ -15,6 +16,8 @@ logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
 subreddit = 'earthporn'
 is_quality_enforced = True
 is_resolution_enforced = True
+min_res_X = 1024 # TODO
+min_res_Y = 768
 
 # Initiate server connection
 rddt_conn = httplib.HTTPConnection('www.reddit.com')
@@ -77,8 +80,17 @@ for entry in json_data['data']['children']:
 	if is_quality_enforced is True:
 		if entry['data']['ups'] < entry['data']['downs']*3:
 			continue # ignore anything below a 3:1 vote ratio
-	if is_resolution_enforced is True:
-		pass # do regex here for picture size
+	if is_resolution_enforced is True: # do regex here for picture size
+		result = re.search("[<(\[](?P<resX>[0-9]+?)x(?P<resY>[0-9]+?)[>)\]]",
+			               entry['data']['title'])
+		if not result:
+			continue # ignore entries without correct resolution tags
+		if int(result.group('resX')) < min_res_X:
+			continue # ignore entries that are below the res standards
+		if int(result.group('resY')) < min_res_Y:
+			continue # ignore entries that are below the res standards
+		logging.debug('%s is a %i by %i image', entry['data']['title'],
+			           int(result.group('resX')), int(result.group('resY')))
 	logging.debug('%s is a possible match', entry['data']['title'])
 	image_url = entry['data']['url']
 	image_title = entry['data']['title']
