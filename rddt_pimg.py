@@ -8,7 +8,7 @@ from sys import exit
 import os
 
 # Consts
-PICTURE_EXTENSIONS = ['jpg', 'png', 'bmp', 'jpeg', 'gif']
+PICTURE_EXTENSIONS = ['.jpg', '.png', '.bmp', '.jpeg', '.gif']
 
 # Set up logging
 logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
@@ -75,7 +75,6 @@ max_score = 0;
 image_url = ''
 parsed_img_url = ''
 image_title = ''
-url_extension = ''
 for entry in json_data['data']['children']:
     logging.debug('Looking at entry %s', entry['data']['title'])
     # ignore self posts
@@ -88,8 +87,7 @@ for entry in json_data['data']['children']:
         logging.debug('is not HTTP')
         continue
     # ignore anything without a proper extension
-    url_extension = string.lower(entry['data']['url']).split(".")[-1]
-    if url_extension not in PICTURE_EXTENSIONS:
+    if not string.lower(entry['data']['url']).endswith(PICTURE_EXTENSIONS):
         logging.debug('does not have an image extension')
         continue
     # ignore anything below a 3:1 vote ratio
