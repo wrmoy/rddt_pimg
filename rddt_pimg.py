@@ -15,8 +15,8 @@ logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
 
 # This will eventually be read from a config file
 subreddit = 'earthporn'
-is_quality_enforced = True
-is_resolution_enforced = True
+is_quality_enforced = False
+is_resolution_enforced = False
 min_res_X = 1024 # TODO
 min_res_Y = 768
 
@@ -31,38 +31,38 @@ rddt_conn.endheaders()
 rddt_resp = rddt_conn.getresponse()
 logging.debug('Reddit reponse was %s %s', rddt_resp.status, rddt_resp.reason)
 if rddt_resp.status != 200:
-	logging.error('Reddit response was not OK, closing')
-	rddt_conn.close()
-	exit(1)
+    logging.error('Reddit response was not OK, closing')
+    rddt_conn.close()
+    exit(1)
 
 # Parse JSON data
 raw_data = rddt_resp.read()
 rddt_conn.close()
 if raw_data is '':
-	logging.error('response data is empty, closing')
-	exit(1)
+    logging.error('response data is empty, closing')
+    exit(1)
 json_data = json.loads(raw_data)
 
 # Some early sanity checking
 if 'error' in json_data:
-	logging.error('error %s when grabbing JSON, closing', json_data['error'])
-	exit(1)
+    logging.error('error %s when grabbing JSON, closing', json_data['error'])
+    exit(1)
 if 'data' not in json_data:
-	logging.error('\'data\' field not found in JSON, closing')
-	exit(1)
+    logging.error('\'data\' field not found in JSON, closing')
+    exit(1)
 if 'children' not in json_data['data']:
-	logging.error('\'children\' field not found in JSON, closing')
-	exit(1)
+    logging.error('\'children\' field not found in JSON, closing')
+    exit(1)
 for entry in json_data['data']['children']:
-	if 'data' not in entry:
-		logging.error('\'entry.children\' field not found in JSON, closing')
-		exit(1)
-	for needed_field in ['title', 'url', 'score', 'ups', 'downs',
-	                     'is_self']:
-		if needed_field not in entry['data']:
-			logging.error('\'data.%s\' field not found in JSON, closing', 
-				          needed_field)
-			exit(1)
+    if 'data' not in entry:
+        logging.error('\'entry.children\' field not found in JSON, closing')
+        exit(1)
+    for needed_field in ['title', 'url', 'score', 'ups', 'downs',
+                         'is_self']:
+        if needed_field not in entry['data']:
+            logging.error('\'data.%s\' field not found in JSON, closing', 
+                          needed_field)
+            exit(1)
 
 # Determine which image to pull
 max_score = 0;
@@ -70,43 +70,43 @@ image_url = ''
 parsed_img_url = ''
 image_title = ''
 for entry in json_data['data']['children']:
-	logging.debug('Looking at entry %s', entry['data']['title'])
-	# ignore self posts
-	if entry['data']['is_self'] is True:
-		continue
-	# ignore non-HTTP image locations
-	parsed_img_url = urlparse(image_url)
-	if parsed_img_url.scheme is not 'http':
-		continue
-	# ignore anything without a proper extension
-	url_extension = string.lower(entry['data']['url']).split(".")[-1]
-	if url_extension not in PICTURE_EXTENSIONS:
-		continue
-	# ignore anything below a 3:1 vote ratio
-	if is_quality_enforced is True:
-		if entry['data']['ups'] < entry['data']['downs']*3:
-			continue
-	# ignore anything but the highest scoring
-	if int(entry['data']['score']) < max_score:
-		continue
-	# ignore entries that are below the res standards
-	if is_resolution_enforced is True: # do regex here for picture size
-		result = re.search("[<(\[](?P<resX>[0-9]+?)x(?P<resY>[0-9]+?)[>)\]]",
-			               entry['data']['title'])
-		if not result:
-			continue # ignore entries without correct resolution tags
-		if int(result.group('resX')) < min_res_X:
-			continue
-		if int(result.group('resY')) < min_res_Y:
-			continue
-		logging.debug('%s is a %i by %i image', entry['data']['title'],
-			           int(result.group('resX')), int(result.group('resY')))
-	# set the picture to be downloaded
-	max_score = int(entry['data']['score'])
-	image_url = entry['data']['url']
-	image_title = entry['data']['title']
-	logging.debug('%s is a possible match', image_title)
-	logging.debug('%s may be downloaded', image_url)
+    logging.debug('Looking at entry %s', entry['data']['title'])
+    # ignore self posts
+    if entry['data']['is_self'] is True:
+        continue
+    # ignore non-HTTP image locations
+    parsed_img_url = urlparse(image_url)
+    if parsed_img_url.scheme is not 'http':
+        continue
+    # ignore anything without a proper extension
+    url_extension = string.lower(entry['data']['url']).split(".")[-1]
+    if url_extension not in PICTURE_EXTENSIONS:
+        continue
+    # ignore anything below a 3:1 vote ratio
+    if is_quality_enforced is True:
+        if entry['data']['ups'] < entry['data']['downs']*3:
+            continue
+    # ignore anything but the highest scoring
+    if int(entry['data']['score']) < max_score:
+        continue
+    # ignore entries that are below the res standards
+    if is_resolution_enforced is True: # do regex here for picture size
+        result = re.search("[<(\[](?P<resX>[0-9]+?)x(?P<resY>[0-9]+?)[>)\]]",
+                           entry['data']['title'])
+        if not result:
+            continue # ignore entries without correct resolution tags
+        if int(result.group('resX')) < min_res_X:
+            continue
+        if int(result.group('resY')) < min_res_Y:
+            continue
+        logging.debug('%s is a %i by %i image', entry['data']['title'],
+                       int(result.group('resX')), int(result.group('resY')))
+    # set the picture to be downloaded
+    max_score = int(entry['data']['score'])
+    image_url = entry['data']['url']
+    image_title = entry['data']['title']
+    logging.debug('%s is a possible match', image_title)
+    logging.debug('%s may be downloaded', image_url)
 
 # Connect to image server
 parsed_img_url = urlparse(image_url)
@@ -118,18 +118,18 @@ img_conn.putheader('Accept', 'image/*')
 img_conn.endheaders()
 img_resp = img_conn.getresponse()
 logging.debug('Image server reponse was %s %s', img_resp.status, 
-	          img_resp.reason)
+              img_resp.reason)
 if img_resp.status != 200:
-	logging.error('Reddit response was not OK, closing')
-	img_conn.close()
-	exit(1)
+    logging.error('Reddit response was not OK, closing')
+    img_conn.close()
+    exit(1)
 
 # Grab image data
 raw_data = img_resp.read()
 img_conn.close()
 if raw_data is '':
-	logging.error('response data is empty, closing')
-	exit(1)
+    logging.error('response data is empty, closing')
+    exit(1)
 # TODO: handle the image data
 
 logging.info('Finished up')
