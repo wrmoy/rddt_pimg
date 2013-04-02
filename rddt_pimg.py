@@ -75,7 +75,7 @@ for entry in json_data['data']['children']:
 	url_extension = url_extension.replace('/', '.').split('.').pop()
 	if url_extension not in PICTURE_EXTENSIONS:
 		continue # ignore anything without a proper extension
-	if entry['data']['score'] < max_score:
+	if int(entry['data']['score']) < max_score:
 		continue # ignore anything but the highest scoring
 	if is_quality_enforced is True:
 		if entry['data']['ups'] < entry['data']['downs']*3:
@@ -91,8 +91,10 @@ for entry in json_data['data']['children']:
 			continue # ignore entries that are below the res standards
 		logging.debug('%s is a %i by %i image', entry['data']['title'],
 			           int(result.group('resX')), int(result.group('resY')))
-	logging.debug('%s is a possible match', entry['data']['title'])
+	max_score = int(entry['data']['score'])
 	image_url = entry['data']['url']
 	image_title = entry['data']['title']
+	logging.debug('%s is a possible match', image_title)
+	logging.debug('%s may be downloaded', image_url)
 
 logging.info('Finished up')
