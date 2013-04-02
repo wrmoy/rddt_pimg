@@ -75,11 +75,11 @@ for entry in json_data['data']['children']:
 	url_extension = url_extension.replace('/', '.').split('.').pop()
 	if url_extension not in PICTURE_EXTENSIONS:
 		continue # ignore anything without a proper extension
-	if int(entry['data']['score']) < max_score:
-		continue # ignore anything but the highest scoring
 	if is_quality_enforced is True:
 		if entry['data']['ups'] < entry['data']['downs']*3:
 			continue # ignore anything below a 3:1 vote ratio
+	if int(entry['data']['score']) < max_score:
+		continue # ignore anything but the highest scoring
 	if is_resolution_enforced is True: # do regex here for picture size
 		result = re.search("[<(\[](?P<resX>[0-9]+?)x(?P<resY>[0-9]+?)[>)\]]",
 			               entry['data']['title'])
