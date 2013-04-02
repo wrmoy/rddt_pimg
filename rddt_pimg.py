@@ -79,8 +79,7 @@ for entry in json_data['data']['children']:
 	if parsed_img_url.scheme is not 'http':
 		continue
 	# ignore anything without a proper extension
-	url_extension = string.lower(parsed_img_url.path)
-	url_extension = url_extension.replace('/', '.').split('.').pop()
+	url_extension = string.lower(entry['data']['url']).split(".")[-1]
 	if url_extension not in PICTURE_EXTENSIONS:
 		continue
 	# ignore anything below a 3:1 vote ratio
