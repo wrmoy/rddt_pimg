@@ -1,0 +1,10 @@
+rddt_pimg
+Pull images from a list of sources based on a set of subreddits
+
+Feature wishlist in order of feasibility:
+-download to user-specified folder
+-automatically set downloaded image to background for Windows
+-daemonize for Unix
+-daemonize for OSX
+-daemonize for Windows
+-GUI configurator
