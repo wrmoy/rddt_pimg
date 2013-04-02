@@ -74,7 +74,7 @@ max_score = 0;
 image_url = ''
 parsed_img_url = ''
 image_title = ''
-url_extension
+url_extension = ''
 for entry in json_data['data']['children']:
     logging.debug('Looking at entry %s', entry['data']['title'])
     # ignore self posts
