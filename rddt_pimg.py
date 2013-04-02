@@ -5,6 +5,7 @@ import re
 import string
 from urlparse import urlparse
 from sys import exit
+import os
 
 # Consts
 PICTURE_EXTENSIONS = ['jpg', 'png', 'bmp', 'jpeg', 'gif']
@@ -19,6 +20,10 @@ is_quality_enforced = False
 is_resolution_enforced = False
 min_res_X = 1024 # TODO
 min_res_Y = 768
+destination =  os.path.join(os.path.dirname(os.path.abspath(__file__)), "pictures")
+
+if not os.path.exists(destination):
+    os.makedirs(directory)
 
 # Initiate server connection
 rddt_conn = httplib.HTTPConnection('www.reddit.com')
@@ -69,6 +74,7 @@ max_score = 0;
 image_url = ''
 parsed_img_url = ''
 image_title = ''
+url_extension
 for entry in json_data['data']['children']:
     logging.debug('Looking at entry %s', entry['data']['title'])
     # ignore self posts
@@ -130,6 +136,9 @@ img_conn.close()
 if raw_data is '':
     logging.error('response data is empty, closing')
     exit(1)
-# TODO: handle the image data
+
+# Handle the image data
+with open(os.path.join(destination, image_title, url_extension), 'wb') as f:
+    f.write(data)
 
 logging.info('Finished up')
