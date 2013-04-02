@@ -149,8 +149,8 @@ if raw_data is '':
     exit(1)
 
 # Handle the image data
-with open(os.path.join(destination, 
-          parsed_img_url.path.split('/')[-1]), 'wb') as f:
+image_filename = parsed_img_url.path.split('/')[-1]
+with open(os.path.join(destination, image_filename), 'wb') as f:
     f.write(raw_data)
 
-logging.info('Finished up')
+logging.info('Wrote %s as %s', image_title, image_filename)
