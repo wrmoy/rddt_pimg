@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import string
+from urlparse import urlparse
 from sys import exit
 
 # Consts
@@ -66,35 +67,69 @@ for entry in json_data['data']['children']:
 # Determine which image to pull
 max_score = 0;
 image_url = ''
+parsed_img_url = ''
 image_title = ''
 for entry in json_data['data']['children']:
 	logging.debug('Looking at entry %s', entry['data']['title'])
+	# ignore self posts
 	if entry['data']['is_self'] is True:
-		continue # ignore self posts
-	url_extension = string.lower(entry['data']['url'])
+		continue
+	# ignore non-HTTP image locations
+	parsed_img_url = urlparse(image_url)
+	if parsed_img_url.scheme is not 'http':
+		continue
+	# ignore anything without a proper extension
+	url_extension = string.lower(parsed_img_url.path)
 	url_extension = url_extension.replace('/', '.').split('.').pop()
 	if url_extension not in PICTURE_EXTENSIONS:
-		continue # ignore anything without a proper extension
+		continue
+	# ignore anything below a 3:1 vote ratio
 	if is_quality_enforced is True:
 		if entry['data']['ups'] < entry['data']['downs']*3:
-			continue # ignore anything below a 3:1 vote ratio
+			continue
+	# ignore anything but the highest scoring
 	if int(entry['data']['score']) < max_score:
-		continue # ignore anything but the highest scoring
+		continue
+	# ignore entries that are below the res standards
 	if is_resolution_enforced is True: # do regex here for picture size
 		result = re.search("[<(\[](?P<resX>[0-9]+?)x(?P<resY>[0-9]+?)[>)\]]",
 			               entry['data']['title'])
 		if not result:
 			continue # ignore entries without correct resolution tags
 		if int(result.group('resX')) < min_res_X:
-			continue # ignore entries that are below the res standards
+			continue
 		if int(result.group('resY')) < min_res_Y:
-			continue # ignore entries that are below the res standards
+			continue
 		logging.debug('%s is a %i by %i image', entry['data']['title'],
 			           int(result.group('resX')), int(result.group('resY')))
+	# set the picture to be downloaded
 	max_score = int(entry['data']['score'])
 	image_url = entry['data']['url']
 	image_title = entry['data']['title']
 	logging.debug('%s is a possible match', image_title)
 	logging.debug('%s may be downloaded', image_url)
+
+# Connect to image server
+img_conn = httplib.HTTPConnection(parsed_img_url.netloc)
+# Send request to server for image data
+img_conn.putrequest('GET', parsed_img_url.path)
+img_conn.putheader('User-Agent', 'rddt_pimg v0.1 by wrmoy')
+img_conn.putheader('Accept', 'image/*')
+img_conn.endheaders()
+img_resp = img_conn.getresponse()
+logging.debug('Image server reponse was %s %s', img_resp.status, 
+	          img_resp.reason)
+if img_resp.status != 200:
+	logging.error('Reddit response was not OK, closing')
+	img_conn.close()
+	exit(1)
+
+# Grab image data
+raw_data = img_resp.read()
+img_conn.close()
+if raw_data is '':
+	logging.error('response data is empty, closing')
+	exit(1)
+# TODO: handle the image data
 
 logging.info('Finished up')
