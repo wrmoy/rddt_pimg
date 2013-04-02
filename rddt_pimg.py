@@ -71,8 +71,7 @@ for entry in json_data['data']['children']:
 	logging.debug('Looking at entry %s', entry['data']['title'])
 	if entry['data']['is_self'] is True:
 		continue # ignore self posts
-	url_extension = string.lower(entry['data']['url'])
-	url_extension = url_extension.replace('/', '.').split('.').pop()
+	url_extension = string.lower(entry['data']['url']).split(".")[-1]
 	if url_extension not in PICTURE_EXTENSIONS:
 		continue # ignore anything without a proper extension
 	if entry['data']['score'] < max_score:
