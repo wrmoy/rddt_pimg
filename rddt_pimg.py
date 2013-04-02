@@ -8,7 +8,7 @@ from sys import exit
 import os
 
 # Consts
-PICTURE_EXTENSIONS = ['.jpg', '.png', '.bmp', '.jpeg', '.gif']
+PICTURE_EXTENSIONS = '.jpg', '.png', '.bmp', '.jpeg', '.gif'
 
 # Set up logging
 logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
