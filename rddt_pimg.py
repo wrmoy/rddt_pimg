@@ -20,10 +20,11 @@ is_quality_enforced = False
 is_resolution_enforced = False
 min_res_X = 1024 # TODO
 min_res_Y = 768
-destination =  os.path.join(os.path.dirname(os.path.abspath(__file__)), "pictures")
+destination = os.path.join(os.path.split(os.path.abspath(__file__))[0], 
+                           "pictures")
 
 if not os.path.exists(destination):
-    os.makedirs(directory)
+    os.makedirs(destination)
 
 # Initiate server connection
 rddt_conn = httplib.HTTPConnection('www.reddit.com')
@@ -136,7 +137,7 @@ img_resp = img_conn.getresponse()
 logging.debug('Image server reponse was %s %s', img_resp.status, 
               img_resp.reason)
 if img_resp.status != 200:
-    logging.error('Reddit response was not OK, closing')
+    logging.error('Image response was not OK, closing')
     img_conn.close()
     exit(1)
 
@@ -148,7 +149,8 @@ if raw_data is '':
     exit(1)
 
 # Handle the image data
-with open(os.path.join(destination, image_title, url_extension), 'wb') as f:
-    f.write(data)
+with open(os.path.join(destination, 
+          parsed_img_url.path.split('/')[-1]), 'wb') as f:
+    f.write(raw_data)
 
 logging.info('Finished up')
