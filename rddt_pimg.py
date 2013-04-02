@@ -73,31 +73,41 @@ for entry in json_data['data']['children']:
     logging.debug('Looking at entry %s', entry['data']['title'])
     # ignore self posts
     if entry['data']['is_self'] is True:
+        logging.debug('is a self post')
         continue
     # ignore non-HTTP image locations
-    parsed_img_url = urlparse(image_url)
-    if parsed_img_url.scheme is not 'http':
+    parsed_img_url = urlparse(entry['data']['url'])
+    if parsed_img_url.scheme != 'http':
+        logging.debug('is not HTTP')
         continue
     # ignore anything without a proper extension
     url_extension = string.lower(entry['data']['url']).split(".")[-1]
     if url_extension not in PICTURE_EXTENSIONS:
+        logging.debug('does not have an image extension')
         continue
     # ignore anything below a 3:1 vote ratio
     if is_quality_enforced is True:
+        logging.info('checking quality of %s', entry['data']['title'])
         if entry['data']['ups'] < entry['data']['downs']*3:
+            logging.debug('does not have enough upvotes')
             continue
     # ignore anything but the highest scoring
     if int(entry['data']['score']) < max_score:
+        logging.debug('does not have a high enough score')
         continue
     # ignore entries that are below the res standards
     if is_resolution_enforced is True: # do regex here for picture size
+        logging.info('checking resolution of %s', entry['data']['title'])
         result = re.search("[<(\[](?P<resX>[0-9]+?)x(?P<resY>[0-9]+?)[>)\]]",
                            entry['data']['title'])
         if not result:
+            logging.debug('does not have a correct resolution tag')
             continue # ignore entries without correct resolution tags
         if int(result.group('resX')) < min_res_X:
+            logging.debug('X resolution is smaller than %i', min_res_X)
             continue
         if int(result.group('resY')) < min_res_Y:
+            logging.debug('Y resolution is smaller than %i', min_res_Y)
             continue
         logging.debug('%s is a %i by %i image', entry['data']['title'],
                        int(result.group('resX')), int(result.group('resY')))
