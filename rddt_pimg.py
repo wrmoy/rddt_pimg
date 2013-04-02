@@ -109,6 +109,7 @@ for entry in json_data['data']['children']:
 	logging.debug('%s may be downloaded', image_url)
 
 # Connect to image server
+parsed_img_url = urlparse(image_url)
 img_conn = httplib.HTTPConnection(parsed_img_url.netloc)
 # Send request to server for image data
 img_conn.putrequest('GET', parsed_img_url.path)
