@@ -42,73 +42,57 @@ def update_settings():
     # Check for subreddit
     result = re.search('subreddit = (?P<subreddit>.*)[\n$]', cfg_contents)
     if result:
-        subreddit = result.group('subreddit')
+        SETTINGS["subreddit"] = result.group('subreddit')
     else:
         with open('settings.cfg', 'ab') as f:
-            f.write("subreddit = earthporn")
-        subreddit = 'earthporn'
-
-    SETTINGS["subreddit"] = subreddit
+            f.write(''.join(["subreddit = ", SETTINGS["subreddit"]]))
 
     # Check for quality enforcement
     result = re.search('is_quality_enforced = (?P<quality>.*)[\n$]', 
                        cfg_contents)
     if result:
-        is_quality_enforced = result.group('quality') == 'True'
+        SETTINGS["is_quality_enforced"] = result.group('quality') == 'True'
     else:
         with open('settings.cfg', 'ab') as f:
-            f.write("is_quality_enforced = True")
-        is_quality_enforced = True
-
-    SETTINGS["is_quality_enforced"] = is_quality_enforced
+            f.write(''.join(["is_quality_enforced = ", 
+                             SETTINGS["is_quality_enforced"]]))
 
     # Check for resolution enforcement
     result = re.search('is_resolution_enforced = (?P<resolution>.*)[\n$]', 
                        cfg_contents)
     if result:
-        is_resolution_enforced = result.group('resolution') == 'True'
+        SETTINGS["is_resolution_enforced"] = result.group('resolution') == 'True'
     else:
         with open('settings.cfg', 'ab') as f:
-            f.write("is_resolution_enforced = True")
-        is_resolution_enforced = True
-
-    SETTINGS["is_resolution_enforced"] = is_resolution_enforced
+            f.write(''.join(["is_resolution_enforced = ",
+                             SETTINGS["is_resolution_enforced"]]))
 
     # Check minimum X resolution
     result = re.search('min_res_X = (?P<minX>[0-9]*)[\n$]', cfg_contents)
     if result:
-        min_res_X = int(result.group('minX'))
+        SETTINGS["min_res_X"] = int(result.group('minX'))
     else:
         with open('settings.cfg', 'ab') as f:
-            f.write("min_res_X = 1024")
-        min_res_X = 1024
-
-    SETTINGS["min_res_X"] = min_res_X
+            f.write(''.join(["min_res_X = ", SETTINGS["min_res_X"]]))
 
     # Check minimum Y resolution
     result = re.search('min_res_Y = (?P<minY>[0-9]*)[\n$]', cfg_contents)
     if result:
-        min_res_Y = int(result.group('minY'))
+        SETTINGS["min_res_Y"] = int(result.group('minY'))
     else:
         with open('settings.cfg', 'ab') as f:
-            f.write("min_res_Y = 1024")
-        min_res_Y = 768
-
-    SETTINGS["min_res_Y"] = min_res_Y
+            f.write(''.join(["min_res_Y = ", SETTINGS["min_res_Y"]]))
 
     # Check destination path
     result = re.search('destination = (?P<dest>.*)[\n$]', cfg_contents)
     if result:
-        destination = result.group('dest')
+        SETTINGS["destination"] = result.group('dest')
     else:
         working_dir = os.path.split(os.path.abspath(__file__))[0] 
         with open('settings.cfg', 'ab') as f:
-            f.write("destination = " + os.path.join(working_dir, "pictures"))
-        destination = os.path.join(working_dir, "pictures")
-    if not os.path.exists(destination): # TODO: sanity check for directory
+            f.write("destination = " + SETTINGS["destination"])
+    if not os.path.exists(destination): # TODO: sanity check for directory?
         os.makedirs(destination)
-
-    SETTINGS["destination"] = destination
 
 def fetch_json(subreddit):
     # Initiate server connection
