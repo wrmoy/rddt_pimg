@@ -4,37 +4,40 @@ import logging
 import os
 import re
 import string
+from random import randint
 from urlparse import urlparse
 from sys import exit
 
 # Consts
 PICTURE_EXTENSIONS = '.jpg', '.png', '.bmp', '.jpeg', '.gif'
-USER_AGENT = 'User-Agent', 'rddt_pimg v0.1 by wrmoy'
-# TODO: settings defaults
+USER_AGENT = 'rddt_pimg v0.1 by wrmoy'
 
 # Set up logging
 logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
                     level=logging.DEBUG)
 
-SETTINGS = {}
+# Settings defaults
+SETTINGS = {'subreddit' : 'earthporn', 
+            'is_quality_enforced' : True,
+            'is_resolution_enforced' : True,
+            'min_res_X' : 1024,
+            'min_res_Y' : 768,
+            'destination': os.path.join(
+                             os.path.split(os.path.abspath(__file__))[0], 
+                                           'pictures')}
+
 
 # This will eventually be read from a config file
 def update_settings():
-    working_dir = os.getcwd()
     cfg_contents = ''
-    # Check if cfg exists, if not, create it with defaults
+    # Check if cfg exists, if not, create it with the current settings
     try:
         with open('settings.cfg', 'r') as f:
             cfg_contents = f.read()
     except:
         with open('settings.cfg', 'w') as f:
-            f.write("subreddit = earthporn\n"
-                    "is_quality_enforced = True\n"
-                    "is_resolution_enforced = True\n"
-                    "min_res_X = 1024\n"
-                    "min_res_Y = 768\n"
-                    "destination = " + 
-                    os.path.join(working_dir, "pictures"))
+            for x in SETTINGS.keys():
+                f.write(''.join([x, ' = ', str(SETTINGS[x]), '\n']))
         return
     # Check for subreddit
     result = re.search('subreddit = (?P<subreddit>.*)[\n$]', cfg_contents)
@@ -74,7 +77,7 @@ def update_settings():
     # Check minimum X resolution
     result = re.search('min_res_X = (?P<minX>[0-9]*)[\n$]', cfg_contents)
     if result:
-        min_res_X = result.group('minX')
+        min_res_X = int(result.group('minX'))
     else:
         with open('settings.cfg', 'ab') as f:
             f.write("min_res_X = 1024")
@@ -85,7 +88,7 @@ def update_settings():
     # Check minimum Y resolution
     result = re.search('min_res_Y = (?P<minY>[0-9]*)[\n$]', cfg_contents)
     if result:
-        min_res_Y = result.group('minY')
+        min_res_Y = int(result.group('minY'))
     else:
         with open('settings.cfg', 'ab') as f:
             f.write("min_res_Y = 1024")
@@ -98,6 +101,7 @@ def update_settings():
     if result:
         destination = result.group('dest')
     else:
+        working_dir = os.path.split(os.path.abspath(__file__))[0] 
         with open('settings.cfg', 'ab') as f:
             f.write("destination = " + os.path.join(working_dir, "pictures"))
         destination = os.path.join(working_dir, "pictures")
@@ -106,11 +110,11 @@ def update_settings():
 
     SETTINGS["destination"] = destination
 
-def fetch_json():
+def fetch_json(subreddit):
     # Initiate server connection
     rddt_conn = httplib.HTTPConnection('www.reddit.com')
     # Send request to server for link data
-    rddt_conn.putrequest('GET', '/r/' + SETTINGS["subreddit"] + '.json')
+    rddt_conn.putrequest('GET', '/r/' + subreddit + '.json')
     rddt_conn.putheader('User-Agent', USER_AGENT)
     rddt_conn.putheader('Accept', 'text/plain')
     rddt_conn.putheader('Accept', 'text/html')
@@ -233,15 +237,21 @@ def download_image(image_title, image_url):
 
     # Handle the image data
     image_filename = parsed_img_url.path.split('/')[-1]
-    with open(os.path.join(SETTINGS["destintion"], image_filename), 'wb') as f:
+    with open(os.path.join(SETTINGS["destination"], image_filename), 'wb') as f:
         f.write(raw_data)
 
     logging.info('Wrote %s as %s', image_title, image_filename)
 
 def main():
     update_settings()
-    json_data = fetch_json()
+    # Get the list of subreddits and choose a random one
+    subreddit_list = re.findall('\w+', SETTINGS["subreddit"])
+    rand_idx = randint(0, len(subreddit_list)-1)
+    json_data = fetch_json(subreddit_list[rand_idx])
     title, url = get_top_rated_image(json_data)
+    if not title or not url:
+        logging.warning('did not find an image fitting the criteria, closing')
+        exit(0)
     download_image(title, url)
 
 if __name__ == "__main__":
