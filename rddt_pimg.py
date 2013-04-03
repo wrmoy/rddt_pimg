@@ -9,28 +9,91 @@ import os
 
 # Consts
 PICTURE_EXTENSIONS = '.jpg', '.png', '.bmp', '.jpeg', '.gif'
+USER_AGENT = 'User-Agent', 'rddt_pimg v0.1 by wrmoy'
+# TODO: settings defaults
 
 # Set up logging
 logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
                     level=logging.DEBUG)
 
 # This will eventually be read from a config file
-subreddit = 'earthporn'
-is_quality_enforced = False
-is_resolution_enforced = False
-min_res_X = 1024 # TODO
-min_res_Y = 768
-destination = os.path.join(os.path.split(os.path.abspath(__file__))[0], 
-                           "pictures")
+working_dir = os.path.split(os.path.abspath(__file__))[0]
+def update_settings():
+    cfg_contents = ''
+    # Check if cfg exists, if not, create it with defaults
+    try:
+        with open('settings.cfg', 'rb') as f:
+            cfg_contents = f.read()
+    except:
+        with open('settings.cfg', 'wb') as f:
+            f.write("subreddit = earthporn\n"
+                    "is_quality_enforced = True\n"
+                    "is_resolution_enforced = True\n"
+                    "min_res_X = 1024\n"
+                    "min_res_Y = 768\n"
+                    "destination = " + 
+                    os.path.join(working_dir, "pictures"))
+        return
+    # Check for subreddit
+    result = re.search('subreddit = (?P<subreddit>.*)[\n$]', cfg_contents)
+    if result:
+        subreddit = result.group('subreddit')
+    else:
+        with open('settings.cfg', 'ab') as f:
+            f.write("subreddit = earthporn")
+        subreddit = 'earthporn'
+    # Check for quality enforcement
+    result = re.search('is_quality_enforced = (?P<quality>.*)[\n$]', 
+                       cfg_contents)
+    if result:
+        is_quality_enforced = result.group('quality') == 'True'
+    else:
+        with open('settings.cfg', 'ab') as f:
+            f.write("is_quality_enforced = True")
+        is_quality_enforced = True
+    # Check for resolution enforcement
+    result = re.search('is_resolution_enforced = (?P<resolution>.*)[\n$]', 
+                       cfg_contents)
+    if result:
+        is_resolution_enforced = result.group('resolution') == 'True'
+    else:
+        with open('settings.cfg', 'ab') as f:
+            f.write("is_resolution_enforced = True")
+        is_resolution_enforced = True
+    # Check minimum X resolution
+    result = re.search('min_res_X = (?P<minX>[0-9]*)[\n$]', cfg_contents)
+    if result:
+        min_res_X = result.group('minX')
+    else:
+        with open('settings.cfg', 'ab') as f:
+            f.write("min_res_X = 1024")
+        min_res_X = 1024
+    # Check minimum Y resolution
+    result = re.search('min_res_Y = (?P<minY>[0-9]*)[\n$]', cfg_contents)
+    if result:
+        min_res_Y = result.group('minY')
+    else:
+        with open('settings.cfg', 'ab') as f:
+            f.write("min_res_Y = 1024")
+        min_res_Y = 768
+    # Check destination path
+    result = re.search('destination = (?P<dest>.*)[\n$]', cfg_contents)
+    if result:
+        destination = result.group('dest')
+    else:
+        with open('settings.cfg', 'ab') as f:
+            f.write("destination = " + os.path.join(working_dir, "pictures"))
+        destination = os.path.join(working_dir, "pictures")
+    if not os.path.exists(destination): # TODO: sanity check for directory
+        os.makedirs(destination)
 
-if not os.path.exists(destination):
-    os.makedirs(destination)
+update_settings()
 
 # Initiate server connection
 rddt_conn = httplib.HTTPConnection('www.reddit.com')
 # Send request to server for link data
 rddt_conn.putrequest('GET', '/r/' + subreddit + '.json')
-rddt_conn.putheader('User-Agent', 'rddt_pimg v0.1 by wrmoy')
+rddt_conn.putheader('User-Agent', USER_AGENT)
 rddt_conn.putheader('Accept', 'text/plain')
 rddt_conn.putheader('Accept', 'text/html')
 rddt_conn.endheaders()
@@ -128,7 +191,7 @@ parsed_img_url = urlparse(image_url)
 img_conn = httplib.HTTPConnection(parsed_img_url.netloc)
 # Send request to server for image data
 img_conn.putrequest('GET', parsed_img_url.path)
-img_conn.putheader('User-Agent', 'rddt_pimg v0.1 by wrmoy')
+img_conn.putheader('User-Agent', USER_AGENT)
 img_conn.putheader('Accept', 'image/*')
 img_conn.endheaders()
 img_resp = img_conn.getresponse()
