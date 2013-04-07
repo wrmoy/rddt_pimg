@@ -91,8 +91,8 @@ def update_settings():
         working_dir = os.path.split(os.path.abspath(__file__))[0] 
         with open('settings.cfg', 'ab') as f:
             f.write("destination = " + SETTINGS["destination"])
-    if not os.path.exists(destination): # TODO: sanity check for directory?
-        os.makedirs(destination)
+    if not os.path.exists(SETTINGS["destination"]): # TODO: sanity check for directory?
+        os.makedirs(SETTINGS["destination"])
 
 def fetch_json(subreddit):
     # Initiate server connection
@@ -240,3 +240,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
