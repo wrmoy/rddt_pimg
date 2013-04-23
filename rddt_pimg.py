@@ -20,6 +20,7 @@ logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
 SETTINGS = {'subreddit' : 'earthporn', 
             'is_quality_enforced' : True,
             'is_resolution_enforced' : True,
+            'set_as_wallpaper' : True,
             'min_res_X' : 1024,
             'min_res_Y' : 768,
             'destination': os.path.join(
@@ -66,6 +67,16 @@ def update_settings():
         with open('settings.cfg', 'ab') as f:
             f.write(''.join(["is_resolution_enforced = ",
                              SETTINGS["is_resolution_enforced"]]))
+
+    # Check to set wallpaper
+    result = re.search('set_as_wallpaper = (?P<do_wallpaper>.*)[\n$]', 
+                       cfg_contents)
+    if result:
+        SETTINGS["set_as_wallpaper"] = result.group('do_wallpaper') == 'True'
+    else:
+        with open('settings.cfg', 'ab') as f:
+            f.write(''.join(["set_as_wallpaper = ",
+                             SETTINGS["set_as_wallpaper"]]))
 
     # Check minimum X resolution
     result = re.search('min_res_X = (?P<minX>[0-9]*)[\n$]', cfg_contents)
