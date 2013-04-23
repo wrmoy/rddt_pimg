@@ -1,16 +1,20 @@
+import ctypes
 import httplib
 import json
 import logging
 import os
 import re
 import string
+import sys
 from random import randint
 from urlparse import urlparse
 from sys import exit
 
 # Consts
 PICTURE_EXTENSIONS = '.jpg', '.png', '.bmp', '.jpeg', '.gif'
-USER_AGENT = 'rddt_pimg v0.1 by wrmoy'
+USER_AGENT = 'rddt_pimg v0.2 by wrmoy'
+SPI_SETDESKWALLPAPER = 0x0014
+SPIF_UPDATEINIFILE = 0x0001
 
 # Set up logging
 logging.basicConfig(filename='debug.log', format='%(asctime)s %(message)s',
@@ -208,11 +212,11 @@ def get_top_rated_image(json_data):
         logging.debug('%s may be downloaded', image_url)
     return image_title, image_url
 
-def download_image(image_title, image_url):
+def download_image(image_url):
     # Connect to image server
     parsed_img_url = urlparse(image_url)
-
     img_conn = httplib.HTTPConnection(parsed_img_url.netloc)
+
     # Send request to server for image data
     img_conn.putrequest('GET', parsed_img_url.path)
     img_conn.putheader('User-Agent', USER_AGENT)
@@ -238,7 +242,18 @@ def download_image(image_title, image_url):
     with open(os.path.join(SETTINGS["destination"], image_filename), 'wb') as f:
         f.write(raw_data)
 
-    logging.info('Wrote %s as %s', image_title, image_filename)
+    logging.info('Wrote %s', image_filename)
+
+def set_wallpaper(image_path):
+    if sys.platform == 'win32':
+        ctypes.windll.user32.SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0,
+                                                   image_path, SPIF_UPDATEINIFILE)
+    elif sys.platform == 'darwin':
+        # TODO: use "defaults" command to set wallpaper in OSX
+        pass
+    elif sys.platform.startswith('linux'):
+        # TODO: use gconf to set wallpaper in gnome?
+        pass
 
 def main():
     update_settings()
@@ -247,10 +262,13 @@ def main():
     rand_idx = randint(0, len(subreddit_list)-1)
     json_data = fetch_json(subreddit_list[rand_idx])
     title, url = get_top_rated_image(json_data)
-    if not title or not url:
+    if not url:
         logging.warning('did not find an image fitting the criteria, closing')
         exit(0)
-    download_image(title, url)
+    download_image(url)
+    if SETTINGS["set_as_wallpaper"]:
+        # TODO: change the way we get the filepath, this seems dangerous
+        set_wallpaper(''.join([SETTINGS["destination"], url.split('/')[-1]]))
 
 if __name__ == "__main__":
     main()
