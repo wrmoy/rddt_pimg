@@ -99,11 +99,14 @@ def update_settings():
     if result:
         SETTINGS["destination"] = result.group('dest')
     else:
-        working_dir = os.path.split(os.path.abspath(__file__))[0] 
         with open('settings.cfg', 'ab') as f:
             f.write("destination = " + SETTINGS["destination"])
-    if not os.path.exists(SETTINGS["destination"]): # TODO: sanity check for directory?
-        os.makedirs(SETTINGS["destination"])
+    if not os.path.exists(SETTINGS["destination"]):
+        try:
+            os.makedirs(SETTINGS["destination"])
+        except:
+            logging.debug("Error creating path %s", SETTINGS["destination"])
+            exit(1)
 
 def fetch_json(subreddit):
     # Initiate server connection
